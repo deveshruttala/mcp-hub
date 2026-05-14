@@ -1,0 +1,266 @@
+// AgentHub — Prisma schema
+// Default provider is SQLite for zero-config local MVP. To use Postgres,
+// switch provider to "postgresql" and set DATABASE_URL accordingly.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  passwordHash  String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts          Account[]
+  sessions          Session[]
+  workspaceMembers  WorkspaceMember[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Workspace {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  plan        String   @default("free") // free | pro | team | enterprise
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  members        WorkspaceMember[]
+  agents         Agent[]
+  installedTools InstalledTool[]
+  connections    Connection[]
+  memoryItems    MemoryItem[]
+  executions     ExecutionLog[]
+  cronJobs       CronJob[]
+  workflows      A2AWorkflow[]
+  apiKeys        ApiKey[]
+}
+
+model WorkspaceMember {
+  id          String    @id @default(cuid())
+  workspaceId String
+  userId      String
+  role        String    @default("owner") // owner | admin | member
+  createdAt   DateTime  @default(now())
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, userId])
+}
+
+// MCP / Tool registry
+model Tool {
+  id           String   @id @default(cuid())
+  slug         String   @unique
+  name         String
+  description  String
+  category     String
+  endpoint     String
+  iconUrl      String?
+  rating       Float    @default(4.5)
+  status       String   @default("stable") // stable | beta | alpha
+  permissions  String   // JSON array of permission strings
+  createdAt    DateTime @default(now())
+
+  installs     InstalledTool[]
+}
+
+model InstalledTool {
+  id          String   @id @default(cuid())
+  workspaceId String
+  toolId      String
+  enabled     Boolean  @default(true)
+  config      String?  // JSON config
+  installedAt DateTime @default(now())
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  tool      Tool      @relation(fields: [toolId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, toolId])
+}
+
+model Connection {
+  id            String   @id @default(cuid())
+  workspaceId   String
+  provider      String   // google | github | slack | notion | stripe | linear | supabase | custom
+  accountName   String
+  status        String   @default("connected") // connected | disconnected | error
+  scopes        String   // JSON array
+  tokenStatus   String   @default("active") // active | expired | revoked
+  lastSyncedAt  DateTime?
+  createdAt     DateTime @default(now())
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+}
+
+model MemoryItem {
+  id          String   @id @default(cuid())
+  workspaceId String
+  title       String
+  content     String
+  type        String   // user_preference | project_context | company_knowledge | agent_instruction | tool_usage | long_term_note
+  visibility  String   @default("private") // private | team | agent
+  agentId     String?  // optional linked agent
+  // simple stored vector representation (JSON of token frequencies) for MVP retrieval
+  embedding   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  agent     Agent?    @relation(fields: [agentId], references: [id], onDelete: SetNull)
+}
+
+model Agent {
+  id                 String   @id @default(cuid())
+  workspaceId        String
+  name               String
+  description        String
+  systemInstructions String
+  model              String   @default("gpt-4o-mini")
+  allowedTools       String   // JSON array of tool slugs
+  memoryAccess       String   @default("all") // all | linked | none
+  permissions        String   // JSON array of permission strings
+  budgetLimit        Float    @default(10.0)
+  executionMode      String   @default("manual") // manual | cron | event
+  status             String   @default("active") // active | inactive
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  workspace  Workspace      @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  executions ExecutionLog[]
+  cronJobs   CronJob[]
+  memory     MemoryItem[]
+  steps      A2AWorkflowStep[]
+}
+
+model ExecutionLog {
+  id             String   @id @default(cuid())
+  workspaceId    String
+  agentId        String?
+  workflowId     String?
+  input          String
+  output         String?
+  toolsUsed      String   // JSON array
+  memoryUsed     String   // JSON array of memory item IDs
+  status         String   @default("success") // success | error | running
+  latencyMs      Int      @default(0)
+  estimatedCost  Float    @default(0)
+  errorMessage   String?
+  createdAt      DateTime @default(now())
+
+  workspace Workspace      @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  agent     Agent?         @relation(fields: [agentId], references: [id], onDelete: SetNull)
+  workflow  A2AWorkflow?   @relation(fields: [workflowId], references: [id], onDelete: SetNull)
+}
+
+model CronJob {
+  id          String   @id @default(cuid())
+  workspaceId String
+  agentId     String
+  name        String
+  schedule    String   // cron expression
+  timezone    String   @default("UTC")
+  prompt      String
+  enabled     Boolean  @default(true)
+  retryPolicy String   @default("none") // none | retry-3 | exponential
+  lastRunAt   DateTime?
+  nextRunAt   DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  agent     Agent     @relation(fields: [agentId], references: [id], onDelete: Cascade)
+}
+
+model A2AWorkflow {
+  id          String   @id @default(cuid())
+  workspaceId String
+  name        String
+  description String?
+  inputTask   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  workspace  Workspace         @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  steps      A2AWorkflowStep[]
+  executions ExecutionLog[]
+}
+
+model A2AWorkflowStep {
+  id         String   @id @default(cuid())
+  workflowId String
+  agentId    String
+  position   Int
+  prompt     String?
+
+  workflow A2AWorkflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  agent    Agent       @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  @@index([workflowId, position])
+}
+
+model ApiKey {
+  id          String   @id @default(cuid())
+  workspaceId String
+  provider    String
+  name        String
+  maskedValue String
+  encrypted   String   // encrypted (mock) full value, never returned to UI
+  status      String   @default("active") // active | revoked
+  lastUsedAt  DateTime?
+  createdAt   DateTime @default(now())
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+}
+
+model Permission {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  label       String
+  description String
+}
