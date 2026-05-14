@@ -19,6 +19,9 @@ const schema = z.object({
   AUTH_URL: z.string().url().optional(),
   GOOGLE_CLIENT_ID: z.string().optional(),
   GOOGLE_CLIENT_SECRET: z.string().optional(),
+  // Email magic-link sign-in. Optional — in dev the link is logged to stdout.
+  EMAIL_SERVER: z.string().optional(),
+  EMAIL_FROM: z.string().optional(),
 });
 
 const parsed = schema.safeParse(process.env);

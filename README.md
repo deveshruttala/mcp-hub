@@ -6,7 +6,7 @@ AgentHub is a production-quality MVP of a universal **MCP + AI agent operating s
 
 This repo is a complete Next.js 15 SaaS app with:
 
-- Auth (NextAuth credentials + Google placeholder) with rate-limited signup
+- Auth: **email magic link** + **Google OAuth** + email/password — all via NextAuth v5, with rate-limited signup
 - Modern dashboard SaaS UI (Tailwind + shadcn-style components)
 - **MCP tool marketplace seeded with 100+ real-world tools** across 17 categories (Gmail, GitHub, Slack, Notion, Stripe, Postgres, BigQuery, Snowflake, OpenAI, Anthropic, Pinecone, Firecrawl, etc.) with category filter and live search
 - Connections (Google, GitHub, Slack, Notion, Stripe, Linear, Supabase, custom)
@@ -59,6 +59,22 @@ Open [http://localhost:3000](http://localhost:3000) and sign in with the demo cr
 email:    demo@agenthub.dev
 password: demo1234
 ```
+
+## Enabling email magic-link sign-in
+
+The "Email me a sign-in link" tab is enabled out of the box.
+
+- **Development**: with `EMAIL_SERVER` unset, the magic link is printed to
+  your dev-server console — copy it into your browser to sign in. Use this to
+  test the flow without SMTP.
+- **Production**: set both env vars in `.env`:
+  ```env
+  EMAIL_SERVER="smtp://user:password@smtp.example.com:587"
+  EMAIL_FROM="AgentHub <noreply@your-domain.com>"
+  ```
+  Any SMTP relay works (Gmail with app password, Resend, Postmark, SES,
+  SendGrid, etc.). Tokens live in the `VerificationToken` table and expire
+  after 24 hours.
 
 ## Enabling Google OAuth
 

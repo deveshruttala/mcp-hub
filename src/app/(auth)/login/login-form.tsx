@@ -5,34 +5,61 @@ import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { toast } from "sonner";
+import { Mail } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { GoogleIcon } from "@/components/ui/google-icon";
 
 interface LoginFormProps {
   googleEnabled: boolean;
+  emailEnabled: boolean;
 }
 
-export function LoginForm({ googleEnabled }: LoginFormProps) {
+export function LoginForm({ googleEnabled, emailEnabled }: LoginFormProps) {
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
-  const [email, setEmail] = useState("demo@agenthub.dev");
-  const [password, setPassword] = useState("demo1234");
+  const [credsLoading, setCredsLoading] = useState(false);
+  const [emailLoading, setEmailLoading] = useState(false);
+  const [credsEmail, setCredsEmail] = useState("demo@agenthub.dev");
+  const [credsPassword, setCredsPassword] = useState("demo1234");
+  const [magicEmail, setMagicEmail] = useState("");
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleCredentials(e: React.FormEvent) {
     e.preventDefault();
-    setLoading(true);
-    const res = await signIn("credentials", { email, password, redirect: false });
-    setLoading(false);
+    setCredsLoading(true);
+    const res = await signIn("credentials", {
+      email: credsEmail,
+      password: credsPassword,
+      redirect: false,
+    });
+    setCredsLoading(false);
     if (res?.ok) {
       toast.success("Signed in");
       router.push("/dashboard");
       router.refresh();
     } else {
       toast.error("Invalid credentials");
+    }
+  }
+
+  async function handleMagicLink(e: React.FormEvent) {
+    e.preventDefault();
+    if (!magicEmail) return;
+    setEmailLoading(true);
+    const res = await signIn("nodemailer", {
+      email: magicEmail,
+      callbackUrl: "/dashboard",
+      redirect: false,
+    });
+    setEmailLoading(false);
+    if (res?.error) {
+      toast.error("Could not send magic link");
+    } else {
+      toast.success("Magic link sent");
+      router.push("/verify-request");
     }
   }
 
@@ -62,33 +89,68 @@ export function LoginForm({ googleEnabled }: LoginFormProps) {
             </div>
           </>
         )}
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-1">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@company.com"
-            />
-          </div>
-          <div className="space-y-1">
-            <Label htmlFor="password">Password</Label>
-            <Input
-              id="password"
-              type="password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
-            />
-          </div>
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? "Signing in…" : "Sign in"}
-          </Button>
-        </form>
+
+        <Tabs defaultValue={emailEnabled ? "magic" : "password"}>
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="magic" disabled={!emailEnabled}>
+              <Mail className="mr-1 h-3.5 w-3.5" /> Magic link
+            </TabsTrigger>
+            <TabsTrigger value="password">Password</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="magic">
+            <form onSubmit={handleMagicLink} className="space-y-4">
+              <div className="space-y-1">
+                <Label htmlFor="magic-email">Email</Label>
+                <Input
+                  id="magic-email"
+                  type="email"
+                  required
+                  value={magicEmail}
+                  onChange={(e) => setMagicEmail(e.target.value)}
+                  placeholder="you@company.com"
+                />
+                <p className="text-[11px] text-muted-foreground">
+                  We&apos;ll email you a one-time link to sign in. No password required.
+                </p>
+              </div>
+              <Button type="submit" className="w-full" disabled={emailLoading || !magicEmail}>
+                {emailLoading ? "Sending…" : "Email me a sign-in link"}
+              </Button>
+            </form>
+          </TabsContent>
+
+          <TabsContent value="password">
+            <form onSubmit={handleCredentials} className="space-y-4">
+              <div className="space-y-1">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  required
+                  value={credsEmail}
+                  onChange={(e) => setCredsEmail(e.target.value)}
+                  placeholder="you@company.com"
+                />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="password">Password</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  required
+                  value={credsPassword}
+                  onChange={(e) => setCredsPassword(e.target.value)}
+                  placeholder="••••••••"
+                />
+              </div>
+              <Button type="submit" className="w-full" disabled={credsLoading}>
+                {credsLoading ? "Signing in…" : "Sign in"}
+              </Button>
+            </form>
+          </TabsContent>
+        </Tabs>
+
         <p className="text-center text-xs text-muted-foreground">
           Don&apos;t have an account?{" "}
           <Link href="/signup" className="text-foreground underline">
