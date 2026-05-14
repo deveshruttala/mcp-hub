@@ -186,6 +186,20 @@ call_other_agents
 | `npm run db:push`     | Push schema (no migration history)           |
 | `npm run db:seed`     | Seed demo workspace + sample data            |
 | `npm run db:reset`    | Drop, re-migrate, and re-seed                |
+| `npm test`            | Run the Vitest unit-test suite               |
+| `npm run test:watch`  | Watch-mode tests for development             |
+| `npm run test:coverage` | Run tests with v8 coverage report          |
+
+## Tests
+
+A Vitest suite lives under `tests/` covering the pure-function helpers:
+crypto round-trip + tamper detection, permission checks, rate limiting,
+memory tokenisation, formatting utilities, and the MCP tool catalog
+shape. All 43 tests run in under a second with no database needed.
+
+```bash
+npm test
+```
 
 ## Production hardening checklist
 

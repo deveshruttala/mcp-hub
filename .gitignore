@@ -12,3 +12,5 @@ prisma/dev.db-journal
 .turbo
 tsconfig.tsbuildinfo
 next-env.d.ts
+coverage
+
