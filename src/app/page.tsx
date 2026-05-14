@@ -68,34 +68,6 @@ const useCases = [
   "Manage permissions and API keys from one dashboard",
 ];
 
-const pricing = [
-  {
-    name: "Free",
-    price: "$0",
-    cadence: "forever",
-    features: ["3 agents", "5 installed tools", "50 memory items", "Manual runs only"],
-  },
-  {
-    name: "Pro",
-    price: "$29",
-    cadence: "per month",
-    highlighted: true,
-    features: ["Unlimited agents", "Cron agents", "Unlimited memory", "Execution logs", "A2A workflows"],
-  },
-  {
-    name: "Team",
-    price: "$99",
-    cadence: "per month",
-    features: ["Shared memory", "Team permissions", "Audit logs", "Workspace SSO", "Priority support"],
-  },
-  {
-    name: "Enterprise",
-    price: "Custom",
-    cadence: "contact us",
-    features: ["Private cloud", "SOC2-ready controls", "Custom integrations", "Dedicated support"],
-  },
-];
-
 export default function LandingPage() {
   return (
     <div className="min-h-screen overflow-hidden bg-background text-foreground">
@@ -110,7 +82,6 @@ export default function LandingPage() {
           <a href="#features" className="text-muted-foreground hover:text-foreground">Features</a>
           <a href="#how-it-works" className="text-muted-foreground hover:text-foreground">How it works</a>
           <a href="#use-cases" className="text-muted-foreground hover:text-foreground">Use cases</a>
-          <Link href="/pricing" className="text-muted-foreground hover:text-foreground">Pricing</Link>
         </nav>
         <div className="flex items-center gap-2">
           <Button variant="ghost" asChild>
@@ -245,40 +216,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <section className="border-y bg-muted/30">
-        <div className="container py-20">
-          <div className="mx-auto max-w-2xl text-center">
-            <h2 className="text-3xl font-semibold tracking-tight md:text-4xl">Pricing that scales with you</h2>
-            <p className="mt-3 text-muted-foreground">Start free. Upgrade when your agents pay for themselves.</p>
-          </div>
-          <div className="mt-12 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            {pricing.map((p) => (
-              <Card
-                key={p.name}
-                className={p.highlighted ? "border-primary shadow-lg ring-1 ring-primary/30" : ""}
-              >
-                <CardContent className="p-6">
-                  <p className="text-sm font-medium">{p.name}</p>
-                  <p className="mt-2 text-3xl font-semibold">{p.price}</p>
-                  <p className="text-xs text-muted-foreground">{p.cadence}</p>
-                  <ul className="mt-4 space-y-2 text-sm">
-                    {p.features.map((f) => (
-                      <li key={f} className="flex items-center gap-2">
-                        <Check className="h-3.5 w-3.5 text-emerald-500" />
-                        {f}
-                      </li>
-                    ))}
-                  </ul>
-                  <Button className="mt-6 w-full" variant={p.highlighted ? "default" : "outline"} asChild>
-                    <Link href="/signup">Get started</Link>
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-
       <section className="container py-20 text-center">
         <h2 className="text-3xl font-semibold tracking-tight md:text-4xl">
           Stop reconfiguring. Start orchestrating.
@@ -294,7 +231,7 @@ export default function LandingPage() {
             </Link>
           </Button>
           <Button size="lg" variant="outline" asChild>
-            <Link href="/pricing">View pricing</Link>
+            <Link href="/login">Try the demo workspace</Link>
           </Button>
         </div>
       </section>
@@ -305,7 +242,6 @@ export default function LandingPage() {
           <div className="flex gap-4">
             <Link href="/login">Sign in</Link>
             <Link href="/signup">Sign up</Link>
-            <Link href="/pricing">Pricing</Link>
           </div>
         </div>
       </footer>

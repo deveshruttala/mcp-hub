@@ -19,7 +19,7 @@ This repo is a complete Next.js 15 SaaS app with:
 - Encrypted API key vault
 - Execution logs with filters
 - Hosted MCP/API gateway (`/api/agent/run`, `/api/a2a/run`, `/api/mcp/tools`, `/api/memory/search`, `/api/cron/run-now`, `/api/health`)
-- Public landing + pricing pages
+- Public landing page
 - Realistic seeded sample data
 - **Production hardening**: AES-256-GCM vault encryption, env validation at boot, security headers (HSTS, X-Frame-Options, Permissions-Policy, COOP), rate-limited public endpoints, health check
 
@@ -93,7 +93,6 @@ src/
 │   │   └── settings/
 │   ├── (auth)/           # Login & signup
 │   ├── api/              # Hosted MCP/API gateway + auth routes
-│   ├── pricing/
 │   └── page.tsx          # Landing page
 ├── auth.ts               # NextAuth config
 ├── components/
