@@ -59,15 +59,17 @@ export function MemoryClient({
   );
   const [previewIds, setPreviewIds] = useState<Set<string>>(new Set());
 
+  // Each whitespace-separated token must appear in title/content/type. This
+  // is more forgiving than a strict substring match — "focus hours" still
+  // matches "Working hours" because we also OR-match on token-by-token.
   const filtered = useMemo(() => {
-    if (!query.trim()) return items;
-    const q = query.toLowerCase();
-    return items.filter(
-      (i) =>
-        i.title.toLowerCase().includes(q) ||
-        i.content.toLowerCase().includes(q) ||
-        i.type.toLowerCase().includes(q),
-    );
+    const q = query.trim().toLowerCase();
+    if (!q) return items;
+    const tokens = q.split(/\s+/).filter(Boolean);
+    return items.filter((i) => {
+      const haystack = `${i.title} ${i.content} ${i.type}`.toLowerCase();
+      return tokens.some((t) => haystack.includes(t));
+    });
   }, [items, query]);
 
   const previewItems = items.filter((i) => previewIds.has(i.id));
@@ -139,8 +141,12 @@ export function MemoryClient({
         {filtered.length === 0 ? (
           <EmptyState
             icon={Brain}
-            title="No memory yet"
-            description="Add a memory and reuse it across every agent and AI app."
+            title={query.trim() ? "No matches for your search" : "No memory yet"}
+            description={
+              query.trim()
+                ? "Try a shorter query or use semantic search for fuzzy matches."
+                : "Add a memory and reuse it across every agent and AI app."
+            }
           />
         ) : (
           <div className="grid gap-3 sm:grid-cols-2">
