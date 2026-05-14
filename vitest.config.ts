@@ -9,6 +9,7 @@ export default defineConfig({
   },
   test: {
     include: ["src/**/*.test.ts", "tests/**/*.test.ts"],
+    exclude: ["node_modules", ".next", "tests/integration/**"],
     environment: "node",
     globals: false,
     reporters: ["verbose"],

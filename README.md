@@ -189,16 +189,27 @@ call_other_agents
 | `npm test`            | Run the Vitest unit-test suite               |
 | `npm run test:watch`  | Watch-mode tests for development             |
 | `npm run test:coverage` | Run tests with v8 coverage report          |
+| `npm run test:integration` | Boot dev server + run feature coverage  |
 
 ## Tests
 
-A Vitest suite lives under `tests/` covering the pure-function helpers:
-crypto round-trip + tamper detection, permission checks, rate limiting,
-memory tokenisation, formatting utilities, and the MCP tool catalog
-shape. All 43 tests run in under a second with no database needed.
+Two suites live under `tests/`:
+
+**Unit (`npm test`)** — 43 tests, ~300ms, no DB.
+Covers pure functions: crypto round-trip + tamper detection, permission
+checks, rate limiting, memory tokenisation, formatting utilities, and the
+MCP tool catalog shape.
+
+**Integration (`npm run test:integration`)** — 33 tests, ~12s.
+Spawns a real Next.js dev server, signs in as the seeded demo user, and
+exercises every page render, every API gateway endpoint (`/api/health`,
+`/api/mcp/*`, `/api/memory/*`, `/api/agent/run`, `/api/a2a/run`,
+`/api/cron/run-now`), auth (anonymous redirects + 401s), the providers
+endpoint, and every security header set by the Edge middleware.
 
 ```bash
-npm test
+npm test                 # 43 unit tests
+npm run test:integration # 33 integration tests
 ```
 
 ## Production hardening checklist
