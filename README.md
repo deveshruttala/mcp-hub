@@ -60,6 +60,27 @@ email:    demo@agenthub.dev
 password: demo1234
 ```
 
+## Enabling Google OAuth
+
+The "Continue with Google" button only renders when Google credentials are
+configured — local development without OAuth still works via the email
+demo login.
+
+1. Open the [Google Cloud Console](https://console.cloud.google.com/) → **APIs & Services → Credentials**.
+2. Create an **OAuth 2.0 Client ID** of type *Web application*.
+3. Add the redirect URI for each environment:
+   - `http://localhost:3000/api/auth/callback/google` (development)
+   - `https://<your-domain>/api/auth/callback/google` (production)
+4. Paste the Client ID and Client Secret into `.env`:
+   ```env
+   GOOGLE_CLIENT_ID="..."
+   GOOGLE_CLIENT_SECRET="..."
+   ```
+5. Restart the dev server. The button will appear on `/login` and `/signup`.
+
+First-time OAuth users automatically get a personal workspace via the
+`events.signIn` hook in `src/auth.ts`.
+
 ## Switching to Postgres
 
 The MVP uses SQLite for zero-config startup. To use Postgres:
